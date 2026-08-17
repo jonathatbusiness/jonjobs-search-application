@@ -16,7 +16,9 @@ const emptyFilters = {
   employment_type: "Any",
   seniority: "Any",
   source: "Any",
+  published: "Any",
   match: "Any",
+  application_state: "Any",
 };
 
 function matchesAdvanced(job, filters) {
@@ -25,10 +27,21 @@ function matchesAdvanced(job, filters) {
   if (filters.employment_type !== "Any" && job.employment_type !== filters.employment_type) return false;
   if (filters.seniority !== "Any" && job.seniority !== filters.seniority) return false;
   if (filters.source !== "Any" && job.source !== filters.source) return false;
+  if (filters.published !== "Any") {
+    const publishedAt = job.published_at ? new Date(job.published_at).getTime() : 0;
+    const days = Number(filters.published.match(/\d+/)?.[0] || 0);
+    const threshold = Date.now() - days * 24 * 60 * 60 * 1000;
+    if (!publishedAt || publishedAt < threshold) return false;
+  }
   if (filters.match !== "Any") {
     const [min, max] = filters.match.split("-").map(Number);
     if (typeof job.match_score !== "number" || job.match_score < min || job.match_score > max) return false;
   }
+  const applicationStatus = job.application_status || job.application?.status;
+  if (filters.application_state === "Not applied" && applicationStatus) return false;
+  if (filters.application_state === "Applied" && applicationStatus !== "applied") return false;
+  if (filters.application_state === "In process" && !["screening", "interview", "case", "offer"].includes(applicationStatus)) return false;
+  if (filters.application_state === "Rejected" && applicationStatus !== "rejected") return false;
   return true;
 }
 
@@ -84,6 +97,15 @@ export default function JobsWorkspace({ initialJobs }) {
     });
   }
 
+  function openJob(job) {
+    if (job.status === "new") {
+      setSelectedJob({ ...job, status: "viewed" });
+      patchJob(job, { status: "viewed" });
+      return;
+    }
+    setSelectedJob(job);
+  }
+
   async function markApplied(job) {
     await fetch("/api/applications", {
       method: "POST",
@@ -137,7 +159,7 @@ export default function JobsWorkspace({ initialJobs }) {
 
       <JobGrid
         jobs={visibleJobs}
-        onOpen={setSelectedJob}
+        onOpen={openJob}
         onToggleFavorite={(job) => patchJob(job, { is_favorite: !job.is_favorite })}
         onDiscard={(job) => patchJob(job, { status: "discarded" })}
       />

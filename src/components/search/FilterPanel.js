@@ -9,7 +9,9 @@ const filterOptions = {
   employment_type: ["Any", "Full-time", "Part-time", "Contract", "Temporary", "Internship", "Unknown"],
   seniority: ["Any", "Entry", "Junior", "Mid", "Senior", "Lead", "Manager", "Unknown"],
   source: ["Any", "LinkedIn", "Indeed", "Company", "Other"],
+  published: ["Any", "Last 24 hours", "Last 3 days", "Last 7 days", "Last 14 days", "Last 30 days"],
   match: ["Any", "80-100", "60-79", "40-59"],
+  application_state: ["Any", "Not applied", "Applied", "In process", "Rejected"],
 };
 
 export default function FilterPanel({ filters, onChange, onReset }) {

@@ -117,3 +117,20 @@ export async function updateJob(id, updates) {
   if (error) throw new Error(error.message);
   return data;
 }
+
+export async function upsertDiscoveredJobs(jobs) {
+  const supabase = getSupabaseServerClient();
+  if (!supabase || !jobs.length) return { inserted: jobs.length, updated: 0 };
+
+  const { data, error } = await supabase
+    .from("jobs")
+    .upsert(jobs, { onConflict: "canonical_key" })
+    .select("id, created_at, updated_at");
+
+  if (error) throw new Error(error.message);
+
+  return {
+    inserted: data?.length || 0,
+    updated: 0,
+  };
+}

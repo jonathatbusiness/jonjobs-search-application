@@ -1,13 +1,13 @@
 import AppShell from "@/components/layout/AppShell";
 import AutomationSettings from "@/components/settings/AutomationSettings";
 import { requireAuth } from "@/services/auth/requireAuth";
-import { getAutomationSettings } from "@/services/search";
+import { getAutomationSettings, getSearchRuns } from "@/services/search";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   await requireAuth();
-  const automation = await getAutomationSettings();
+  const [automation, runs] = await Promise.all([getAutomationSettings(), getSearchRuns()]);
 
   return (
     <AppShell automationEnabled={automation.enabled}>
@@ -15,7 +15,7 @@ export default async function SettingsPage() {
         <h1 className="text-3xl font-semibold tracking-tight text-[var(--ink-950)]">Settings</h1>
         <p className="mt-1 text-[var(--ink-600)]">Control automation and manual discovery runs.</p>
       </div>
-      <AutomationSettings initialSettings={automation} />
+      <AutomationSettings initialSettings={automation} initialRuns={runs} />
     </AppShell>
   );
 }

@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
 import { isRequestAuthenticated } from "@/services/auth/requireAuth";
-import { updateAutomationSettings } from "@/services/search";
+import { runDiscovery } from "@/services/discovery/run";
 
-export async function PATCH(request) {
+export async function POST(request, { params }) {
   try {
     if (!isRequestAuthenticated(request)) {
       return NextResponse.json({ success: false, error: "Unauthorized." }, { status: 401 });
     }
 
-    const updates = await request.json();
-    const data = await updateAutomationSettings({ enabled: Boolean(updates.enabled) });
+    const { profileId } = await params;
+    const data = await runDiscovery({ profileId });
     return NextResponse.json({ success: true, data });
   } catch (error) {
-    return NextResponse.json({ success: false, error: "Could not update automation settings." }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Could not run search profile." }, { status: 500 });
   }
 }

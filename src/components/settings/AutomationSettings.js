@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { FiPlay } from "react-icons/fi";
+import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Toggle from "@/components/ui/Toggle";
 import { formatRelativeDate } from "@/services/jobs/format";
 
-export default function AutomationSettings({ initialSettings }) {
+export default function AutomationSettings({ initialSettings, initialRuns = [] }) {
   const [settings, setSettings] = useState(initialSettings);
+  const [runs, setRuns] = useState(initialRuns);
   const [message, setMessage] = useState("");
 
   async function updateEnabled(enabled) {
@@ -21,9 +23,23 @@ export default function AutomationSettings({ initialSettings }) {
 
   async function runNow() {
     setMessage("Running search job...");
-    const response = await fetch("/api/cron/search-jobs", { method: "POST" });
+    const response = await fetch("/api/search/run", { method: "POST" });
     const payload = await response.json();
-    setMessage(payload.success ? "Search job completed." : payload.error || "Search job failed.");
+    setMessage(payload.success ? payload.data.message : payload.error || "Search job failed.");
+    if (payload.success) {
+      setSettings((current) => ({ ...current, last_status: payload.data.status, last_run_at: new Date().toISOString() }));
+      setRuns((current) => [
+        {
+          id: crypto.randomUUID(),
+          status: payload.data.status,
+          jobs_found: payload.data.jobsFound,
+          jobs_inserted: payload.data.jobsInserted,
+          message: payload.data.message,
+          created_at: new Date().toISOString(),
+        },
+        ...current,
+      ]);
+    }
   }
 
   return (
@@ -58,6 +74,42 @@ export default function AutomationSettings({ initialSettings }) {
           </Button>
           {message ? <p className="text-sm text-[var(--ink-600)]">{message}</p> : null}
         </div>
+      </section>
+
+      <section className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold text-[var(--ink-950)]">Search run history</h2>
+        {runs.length ? (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[680px] text-left text-sm">
+              <thead className="border-b border-[var(--line)] text-xs uppercase text-[var(--ink-500)]">
+                <tr>
+                  <th className="py-2 pr-4">Run</th>
+                  <th className="py-2 pr-4">Profile</th>
+                  <th className="py-2 pr-4">Status</th>
+                  <th className="py-2 pr-4">Found</th>
+                  <th className="py-2 pr-4">Inserted</th>
+                  <th className="py-2 pr-4">Message</th>
+                </tr>
+              </thead>
+              <tbody>
+                {runs.map((run) => (
+                  <tr key={run.id} className="border-b border-[var(--line)] last:border-0">
+                    <td className="py-3 pr-4 text-[var(--ink-700)]">{formatRelativeDate(run.created_at)}</td>
+                    <td className="py-3 pr-4 text-[var(--ink-700)]">{run.search_profiles?.name || "Global"}</td>
+                    <td className="py-3 pr-4">
+                      <Badge variant={run.status === "completed" ? "success" : run.status === "failed" ? "danger" : "warning"}>{run.status}</Badge>
+                    </td>
+                    <td className="py-3 pr-4 text-[var(--ink-700)]">{run.jobs_found || 0}</td>
+                    <td className="py-3 pr-4 text-[var(--ink-700)]">{run.jobs_inserted || 0}</td>
+                    <td className="py-3 pr-4 text-[var(--ink-600)]">{run.message || run.error_message || "No details"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-[var(--ink-600)]">No search runs yet.</p>
+        )}
       </section>
     </div>
   );
