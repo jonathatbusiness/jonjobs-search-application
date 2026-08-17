@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "dev:open": "concurrently \"next dev\" \"wait-on http://localhost:3000 && cmd.exe /c start \\\"\\\" http://localhost:3000\""
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
@@ -17,8 +18,11 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "concurrently": "^10.0.5",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
-    "tailwindcss": "^4"
+    "open-cli": "^9.0.0",
+    "tailwindcss": "^4",
+    "wait-on": "^9.1.0"
   }
 }

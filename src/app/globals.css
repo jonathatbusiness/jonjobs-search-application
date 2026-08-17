@@ -1,26 +1,64 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #edf2f1;
+  --foreground: #14202b;
+  --brand-950: #122033;
+  --brand-900: #182a40;
+  --brand-800: #1d3a4a;
+  --brand-700: #235b68;
+  --brand-600: #2b7480;
+  --brand-100: #dcebed;
+  --brand-050: #eff7f7;
+  --accent-700: #b84d31;
+  --accent-600: #d45f3b;
+  --accent-100: #fbe2d7;
+  --accent-050: #fff4ef;
+  --success-700: #1d6b4f;
+  --success-100: #ddf1e7;
+  --warning-700: #8a5a14;
+  --warning-100: #f8e9c8;
+  --danger-700: #a63d3d;
+  --danger-100: #f9dede;
+  --ink-950: #14202b;
+  --ink-900: #1b2935;
+  --ink-800: #2b3a46;
+  --ink-700: #40515e;
+  --ink-600: #60707d;
+  --ink-500: #7c8a95;
+  --ink-300: #b9c2c8;
+  --ink-200: #d5dce0;
+  --ink-100: #e9edef;
+  --ink-050: #f5f7f8;
+  --surface: #ffffff;
+  --surface-muted: #f7f9f8;
+  --sand: #f7f2e9;
+  --line: #d8e0e1;
+  --line-strong: #c5d0d2;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: "Courier New", Courier, monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  outline-color: var(--brand-600);
+}
+
+::selection {
+  background: var(--brand-100);
+  color: var(--brand-950);
 }
