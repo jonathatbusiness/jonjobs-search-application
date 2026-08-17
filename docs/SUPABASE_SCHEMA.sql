@@ -171,6 +171,24 @@ alter table search_profiles enable row level security;
 alter table search_runs enable row level security;
 alter table automation_settings enable row level security;
 
+grant usage on schema public to service_role;
+
+grant select, insert, update, delete on table job_sources to service_role;
+grant select, insert, update, delete on table jobs to service_role;
+grant select, insert, update, delete on table applications to service_role;
+grant select, insert, update, delete on table search_profiles to service_role;
+grant select, insert, update, delete on table search_runs to service_role;
+grant select, insert, update, delete on table automation_settings to service_role;
+
+grant usage, select on all sequences in schema public to service_role;
+
+revoke all on table job_sources from anon, authenticated;
+revoke all on table jobs from anon, authenticated;
+revoke all on table applications from anon, authenticated;
+revoke all on table search_profiles from anon, authenticated;
+revoke all on table search_runs from anon, authenticated;
+revoke all on table automation_settings from anon, authenticated;
+
 drop policy if exists "deny public job_sources access" on job_sources;
 create policy "deny public job_sources access" on job_sources for all to anon, authenticated using (false) with check (false);
 
