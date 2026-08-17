@@ -114,6 +114,13 @@ export async function runDiscovery({ profileId = null, automation = false } = {}
     message: results.length ? "Discovery run completed." : "No enabled search profiles found.",
   };
 
+  if (results.length && summary.jobsInserted === 0) {
+    const pendingProviders = summary.providerResults.filter((result) => result.status === "pending");
+    summary.message = pendingProviders.length
+      ? "Run completed, but no jobs were imported because discovery providers still need a public-index/search API."
+      : "Run completed, but no matching jobs were found.";
+  }
+
   await supabase
     .from("automation_settings")
     .update({ last_run_at: new Date().toISOString(), last_status: summary.status, updated_at: new Date().toISOString() })

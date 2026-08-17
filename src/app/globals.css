@@ -51,11 +51,45 @@ body {
 }
 
 button,
-a,
 input,
 select,
 textarea {
   outline-color: var(--brand-600);
+}
+
+button,
+a,
+select,
+summary,
+[role="button"],
+[role="switch"] {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+input,
+select,
+textarea {
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--brand-600);
 }
 
 ::selection {

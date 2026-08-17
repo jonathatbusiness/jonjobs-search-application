@@ -37,6 +37,9 @@ export default function SearchProfilesWorkspace({ initialProfiles }) {
   const [draft, setDraft] = useState(profiles[0] || emptyProfile);
   const [internalQuery, setInternalQuery] = useState("");
   const [message, setMessage] = useState("");
+  const [feedbackVariant, setFeedbackVariant] = useState("default");
+  const [runningProfileId, setRunningProfileId] = useState(null);
+  const [profileFeedback, setProfileFeedback] = useState({});
 
   const query = useMemo(() => buildBooleanQuery(draft), [draft]);
   const filteredProfiles = useMemo(() => {
@@ -55,12 +58,14 @@ export default function SearchProfilesWorkspace({ initialProfiles }) {
     setSelectedId(profile.id);
     setDraft(profile);
     setMessage("");
+    setFeedbackVariant("default");
   }
 
   function newProfile() {
     setSelectedId(null);
     setDraft(emptyProfile);
     setMessage("");
+    setFeedbackVariant("default");
   }
 
   async function saveProfile() {
@@ -73,6 +78,7 @@ export default function SearchProfilesWorkspace({ initialProfiles }) {
     const payload = await response.json();
     if (!response.ok) {
       setMessage(payload.error || "Could not save profile.");
+      setFeedbackVariant("danger");
       return;
     }
     const saved = profileFromDb(payload.data);
@@ -80,6 +86,7 @@ export default function SearchProfilesWorkspace({ initialProfiles }) {
     setSelectedId(saved.id);
     setDraft(saved);
     setMessage("Search profile saved.");
+    setFeedbackVariant("success");
   }
 
   async function deleteProfile(profile) {
@@ -112,11 +119,39 @@ export default function SearchProfilesWorkspace({ initialProfiles }) {
   }
 
   async function runProfile(profile) {
+    setRunningProfileId(profile.id);
     setMessage(`Running ${profile.name}...`);
-    const response = await fetch(`/api/search/run/${profile.id}`, { method: "POST" });
-    const payload = await response.json();
-    setMessage(payload.success ? payload.data.message : payload.error || "Search run failed.");
+    setFeedbackVariant("default");
+    setProfileFeedback((current) => ({ ...current, [profile.id]: { variant: "default", message: "Running search..." } }));
+
+    try {
+      const response = await fetch(`/api/search/run/${profile.id}`, { method: "POST" });
+      const payload = await response.json();
+      const providerNote = payload.data?.providerResults?.[0]?.message;
+      const nextMessage = payload.success
+        ? providerNote || payload.data.message || "Search run completed."
+        : payload.error || "Search run failed.";
+      const nextVariant = payload.success ? (payload.data.jobsInserted > 0 ? "success" : "warning") : "danger";
+
+      setMessage(nextMessage);
+      setFeedbackVariant(nextVariant);
+      setProfileFeedback((current) => ({ ...current, [profile.id]: { variant: nextVariant, message: nextMessage } }));
+    } catch {
+      const nextMessage = "Search run failed. Check your connection and try again.";
+      setMessage(nextMessage);
+      setFeedbackVariant("danger");
+      setProfileFeedback((current) => ({ ...current, [profile.id]: { variant: "danger", message: nextMessage } }));
+    } finally {
+      setRunningProfileId(null);
+    }
   }
+
+  const feedbackClasses = {
+    default: "border-[var(--line)] bg-[var(--surface-muted)] text-[var(--ink-700)]",
+    success: "border-[var(--success-100)] bg-[var(--success-100)] text-[var(--success-700)]",
+    warning: "border-[var(--warning-100)] bg-[var(--warning-100)] text-[var(--warning-700)]",
+    danger: "border-[var(--danger-100)] bg-[var(--danger-100)] text-[var(--danger-700)]",
+  };
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_430px]">
@@ -232,7 +267,9 @@ export default function SearchProfilesWorkspace({ initialProfiles }) {
               </Button>
             ) : null}
           </div>
-          {message ? <p className="text-sm text-[var(--ink-600)]">{message}</p> : null}
+          {message ? (
+            <p className={`rounded-md border px-3 py-2 text-sm ${feedbackClasses[feedbackVariant]}`}>{message}</p>
+          ) : null}
         </div>
       </section>
 
@@ -270,15 +307,20 @@ export default function SearchProfilesWorkspace({ initialProfiles }) {
                   <FiCopy aria-hidden />
                   Duplicate
                 </Button>
-                <Button type="button" variant="secondary" size="sm" onClick={() => runProfile(profile)}>
+                <Button type="button" variant="secondary" size="sm" onClick={() => runProfile(profile)} disabled={runningProfileId === profile.id}>
                   <FiPlay aria-hidden />
-                  Run
+                  {runningProfileId === profile.id ? "Running..." : "Run"}
                 </Button>
                 <Button type="button" variant="ghost" size="sm" onClick={() => deleteProfile(profile)}>
                   <FiTrash2 aria-hidden />
                   Delete
                 </Button>
               </div>
+              {profileFeedback[profile.id] ? (
+                <p className={`mt-3 rounded-md border px-3 py-2 text-sm ${feedbackClasses[profileFeedback[profile.id].variant]}`}>
+                  {profileFeedback[profile.id].message}
+                </p>
+              ) : null}
             </article>
           ))
         ) : (
